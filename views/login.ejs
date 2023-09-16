@@ -1,30 +1,42 @@
-<!doctype html>
-<html lang="en">
-  <head> </head>
-  <body>
-    <h1>Login</h1>
-    <form method="POST" action="/login">
-      <div class="form-group">
-        <label for="email">Email:</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          class="form-control"
-          required
-        />
-      </div>
-      <div class="form-group">
-        <label for="password">Password:</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          class="form-control"
-          required
-        />
-      </div>
-      <button type="submit" class="btn btn-primary">Login</button>
-    </form>
-  </body>
+<html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <meta
+        name="viewport"
+        content=" width=device-width, initial-scale=1"
+      />
+      <link rel="stylesheet" href="static/css/body.css" />
+      <title>Login</title>
+    </head>
+    <body>
+      <h1>Login</h1>
+      <form method="POST" action="/register">
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input
+            type="email"
+            name="email"
+            id="email"
+            class="form-control"
+            required
+          /><br />
+        </div>
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input
+            type="password"
+            name="password"
+            id="password"
+            class="form-control"
+            required
+            minlength="8"
+          /><br />
+        </div>
+        <button type="submit" class="btn btn-primary">
+          Register
+        </button>
+      </form>
+    </body>
+  </html>
 </html>

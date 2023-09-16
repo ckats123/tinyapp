@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 8080;
 const users = {
   userRandomID: {
     id: "userRandomID",
@@ -38,13 +38,17 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
 
-  if (!user || user.password !== password) {
-    res.status(403).send("Forbidden");
-  } else {
-    res.cookie("user_id", user.id);
-    res.redirect("/urls");
+  
+  if (user) {
+    if (user.password === password) {
+      res.cookie("user_id", user.id);
+      res.redirect("/urls");
+    } else {
+      res.status(403).send("Incorrect password");
+    }
+  }
   }
 });
 
