@@ -1,6 +1,18 @@
+// express_server.js
+
 const express = require("express");
+const session = require("express-session");
 const app = express();
 const PORT = 8080;
+
+app.use(
+  session({
+    secret: "secret",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
 const users = {
   userRandomID: {
     id: "userRandomID",
@@ -31,7 +43,11 @@ app.get("/", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  res.render("login");
+  if (req.cookies.user_id) {
+    res.redirect("/urls");
+  } else {
+    res.render("login");
+  }
 });
 
 app.post("/login", (req, res) => {
@@ -40,7 +56,6 @@ app.post("/login", (req, res) => {
 
   const user = getUserByEmail(email, users);
 
-  
   if (user) {
     if (user.password === password) {
       res.cookie("user_id", user.id);
@@ -49,11 +64,10 @@ app.post("/login", (req, res) => {
       res.status(403).send("Incorrect password");
     }
   }
-  }
 });
 
 app.get("/urls", (req, res) => {
-  const userId = req.cookies["user_id"];
+  const userId = req.cookies.user_id;
   const user = users[userId];
 
   const templateVars = {
@@ -70,7 +84,11 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  res.render("registration");
+  if (req.cookies.user_id) {
+    res.redirect("/urls");
+  } else {
+    res.render("registration");
+  }
 });
 
 app.post("/register", (req, res) => {
@@ -129,11 +147,11 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const user = users[req.cookies["user_id"]];
-  const templateVars = {
-    user: user,
-  };
-  res.render("urls_new", templateVars);
+  if (req.cookies.user_id) {
+    res.render("urls_new");
+  } else {
+    res.redirect("/login");
+  }
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -145,15 +163,22 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);
+  const userId = req.cookies.user_id;
+
+  if (!userId) {
+    res.status(403).send("You must be logged in to create a new URL");
+  }
+
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
-  console.log(urlDatabase);
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
+  if (!longURL) {
+    res.status(404).send("URL not found");
+  }
   res.redirect(longURL);
 });
 
