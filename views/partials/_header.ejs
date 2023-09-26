@@ -21,33 +21,20 @@
           >Create New URL</a
         >
       </div>
-      <!-- <div class="navbar-nav ml-auto">
-        <a class="nav-item nav-link" href="/login">Login</a>
-        <a class="nav-item nav-link" href="/register">Register</a>
-      </div>
-    </div> -->
      <% if (!user) { %>
-      <div>
-        <a class="btn btn-primary" href="/login">Login</a>
+      <div class="navbar-nav ml-auto">
+        <a class="btn btn-primary mr-2" href="/login">Login</a>
         <a class="btn btn-primary" href="/register">Register</a>
       </div>
     <% } else { %>
-    <form class="form-inline my-1" action="/logout" method="POST">
+    <form class="form-inline my-1 ml-auto" action="/logout" method="POST">
       <div>
         Logged in as: <%= user.email %>
-        <button type="submit" class="btn btn-outline-primary ml-3">Logout</button>
+        <button type="submit" class="btn btn-outline-primary mr-auto">Logout</button>
       </div>
     </form>
     <% } %>
   </nav>
 </header>
   </nav>
-  <!-- <% if (user) { %>
-  <form method="POST" action="/logout" class="my-2 my-md-0 ml-auto">
-    Logged in as: <%= user.email %>
-    <button type="submit" class="btn btn-outline-danger">
-      Logout
-    </button>
-  </form>
-  <% } else { %> <% } %> -->
 </header>
