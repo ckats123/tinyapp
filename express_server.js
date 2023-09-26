@@ -3,9 +3,10 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const app = express();
 const bcrypt = require("bcryptjs");
-const password = "purple-monkey-dinosaur"; // found in the req.body object
-const hashedPassword = bcrypt.hashSync(password, 10);
-
+const password1 = "purple-monkey-dinosaur"; // found in the req.body object
+const password2 = "dishwasher-funk";
+const hashedPassword1 = bcrypt.hashSync(password1, 10);
+const hashedPassword2 = bcrypt.hashSync(password2, 10);
 app.set("view engine", "ejs");
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -16,12 +17,12 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: hashedPassword1,
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: hashedPassword2,
   },
 };
 
@@ -93,7 +94,6 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-
   const user = getUserByEmail(email, users);
 
   // if (user) {
