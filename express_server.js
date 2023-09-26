@@ -2,6 +2,9 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const app = express();
+const bcrypt = require("bcryptjs");
+const password = "purple-monkey-dinosaur"; // found in the req.body object
+const hashedPassword = bcrypt.hashSync(password, 10);
 
 app.set("view engine", "ejs");
 app.use(cookieParser());
@@ -93,13 +96,24 @@ app.post("/login", (req, res) => {
 
   const user = getUserByEmail(email, users);
 
+  // if (user) {
+  //   if (user.password === password) {
+  //     res.cookie("user_id", user.id);
+  //     res.redirect("/urls");
+  //   } else {
+  //     res.status(403).send("Incorrect password");
+  //   }
+  // }
+
   if (user) {
-    if (user.password === password) {
+    if (bcrypt.compareSync(password, user.password)) {
       res.cookie("user_id", user.id);
       res.redirect("/urls");
     } else {
       res.status(403).send("Incorrect password");
     }
+  } else {
+    res.status(403).send("User not found");
   }
 });
 
@@ -157,11 +171,14 @@ app.post("/register", (req, res) => {
     return;
   }
 
+  // Hash password before storing in database
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
   // Create new user object
   users[userId] = {
     id: userId,
     email: email,
-    password: password,
+    password: hashedPassword,
   };
 
   res.cookie("user_id", userId);
