@@ -63,14 +63,23 @@ function urlsForUser(id) {
   return userUrls;
 }
 
-function getUserByEmail(email) {
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      return users[userId];
+const getUserByEmail = function (email, database) {
+  for (const userId in database) {
+    if (database[userId].email === email) {
+      return database[userId];
     }
   }
   return null;
-}
+};
+
+// function getUserByEmail(email) {
+//   for (const userId in users) {
+//     if (users[userId].email === email) {
+//       return users[userId];
+//     }
+//   }
+//   return null;
+// }
 
 function generateRandomString() {
   let newString = "";
@@ -176,7 +185,7 @@ app.post("/register", (req, res) => {
   }
 
   // Check if email already exists
-  if (getUserByEmail(email)) {
+  if (getUserByEmail(email, users)) {
     res
       .status(400)
       .send("Email already exists. Please choose a different email.");
