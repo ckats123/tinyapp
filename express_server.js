@@ -2,13 +2,15 @@
 const express = require("express");
 // const cookieParser = require("cookie-parser");
 const app = express();
+// const getUserByEmail = require("./helpers").getUserByEmail;
+const { getUserByEmail } = require("./helpers");
 const bcrypt = require("bcryptjs");
 const password1 = "purple-monkey-dinosaur"; // found in the req.body object
 const password2 = "dishwasher-funk";
 const hashedPassword1 = bcrypt.hashSync(password1, 10);
 const hashedPassword2 = bcrypt.hashSync(password2, 10);
 app.set("view engine", "ejs");
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 const cookieSession = require("cookie-session");
 
@@ -63,14 +65,14 @@ function urlsForUser(id) {
   return userUrls;
 }
 
-const getUserByEmail = function (email, database) {
-  for (const userId in database) {
-    if (database[userId].email === email) {
-      return database[userId];
-    }
-  }
-  return null;
-};
+// const getUserByEmail = function (email, database) {
+//   for (const userId in database) {
+//     if (database[userId].email === email) {
+//       return database[userId];
+//     }
+//   }
+//   return null;
+// };
 
 // function getUserByEmail(email) {
 //   for (const userId in users) {
