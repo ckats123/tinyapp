@@ -1,6 +1,6 @@
 // express_server.js
 const express = require("express");
-const cookieParser = require("cookie-parser");
+// const cookieParser = require("cookie-parser");
 const app = express();
 const bcrypt = require("bcryptjs");
 const password1 = "purple-monkey-dinosaur"; // found in the req.body object
@@ -10,6 +10,17 @@ const hashedPassword2 = bcrypt.hashSync(password2, 10);
 app.set("view engine", "ejs");
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+const cookieSession = require("cookie-session");
+
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["Hello", "Hi"],
+
+    // Cookie Options
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  })
+);
 
 const PORT = 8080;
 
@@ -78,13 +89,13 @@ app.get("/", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const userId = req.cookies["user_id"];
+  const userId = req.session.user_id;
   const user = users[userId];
 
   const templateVars = {
     user: user,
   };
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
     res.redirect("/urls");
   } else {
     res.render("login", templateVars);
@@ -107,7 +118,8 @@ app.post("/login", (req, res) => {
 
   if (user) {
     if (bcrypt.compareSync(password, user.password)) {
-      res.cookie("user_id", user.id);
+      // res.cookie("user_id", user.id);
+      req.session.user_id = user.id;
       res.redirect("/urls");
     } else {
       res.status(403).send("Incorrect password");
@@ -118,7 +130,7 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   if (!userId) {
     res.status(403).send("You must be logged in to view your URLs.");
     return;
@@ -134,18 +146,18 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 });
 
 app.get("/register", (req, res) => {
-  const userId = req.cookies["user_id"];
+  const userId = req.session.user_id;
   const user = users[userId];
 
   const templateVars = {
     user: user,
   };
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
     res.redirect("/urls");
   } else {
     res.render("registration", templateVars);
@@ -181,7 +193,8 @@ app.post("/register", (req, res) => {
     password: hashedPassword,
   };
 
-  res.cookie("user_id", userId);
+  // res.cookie("user_id", userId);
+  req.session.user_id = userId;
 
   res.redirect("/urls");
 });
@@ -197,7 +210,7 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const userId = req.cookies["user_id"];
+  const userId = req.session.user_id;
   const user = users[userId];
 
   const templateVars = {
@@ -209,13 +222,13 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const userId = req.cookies["user_id"];
+  const userId = req.session.user_id;
   const user = users[userId];
 
   const templateVars = {
     user: user,
   };
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     res.redirect("/login");
   } else {
     res.render("urls_new", templateVars);
@@ -225,7 +238,7 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
 
   if (!userId) {
     return res
@@ -238,7 +251,7 @@ app.get("/urls/:id", (req, res) => {
     return;
   }
 
-  if (longURL.userID !== req.cookies.user_id) {
+  if (longURL.userID !== req.session.user_id) {
     res
       .status(403)
       .send("You do not have permission to access this URL.");
@@ -253,7 +266,7 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
 
   if (!userId) {
     res.status(403).send("You must be logged in to create a new URL");
@@ -285,7 +298,7 @@ app.post("/urls/:id/delete", (req, res) => {
     return;
   }
 
-  if (longURL.userID !== req.cookies.user_id) {
+  if (longURL.userID !== req.session.user_id) {
     res
       .status(403)
       .send("You do not have permission to delete this URL.");
@@ -307,7 +320,7 @@ app.post("/urls/:id", (req, res) => {
     return;
   }
 
-  if (longURL.userID !== req.cookies.user_id) {
+  if (longURL.userID !== req.session.user_id) {
     res
       .status(403)
       .send("You do not have permission to edit this URL.");
