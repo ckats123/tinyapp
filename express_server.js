@@ -1,17 +1,13 @@
 // express_server.js
-
 const express = require("express");
-const session = require("express-session");
+const cookieParser = require("cookie-parser");
 const app = express();
-const PORT = 8080;
 
-app.use(
-  session({
-    secret: "secret",
-    resave: false,
-    saveUninitialized: false,
-  })
-);
+app.set("view engine", "ejs");
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+
+const PORT = 8080;
 
 const users = {
   userRandomID: {
@@ -27,16 +23,51 @@ const users = {
 };
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
+
+  b2xVn2: {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID",
+  },
 };
 
-const cookieParser = require("cookie-parser");
-app.use(cookieParser());
+function urlsForUser(id) {
+  const userUrls = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      userUrls[shortURL] = urlDatabase[shortURL].longURL;
+    }
+  }
+  return userUrls;
+}
 
-app.set("view engine", "ejs");
+function getUserByEmail(email) {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return null;
+}
 
-app.use(express.urlencoded({ extended: true }));
+function generateRandomString() {
+  let newString = "";
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 6; i++) {
+    newString += characters.charAt(
+      Math.floor(Math.random() * characters.length)
+    );
+  }
+  return newString;
+}
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -74,11 +105,15 @@ app.post("/login", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const userId = req.cookies.user_id;
+  if (!userId) {
+    res.status(403).send("You must be logged in to view your URLs.");
+    return;
+  }
   const user = users[userId];
-
+  const userUrls = urlsForUser(userId);
   const templateVars = {
     user: user,
-    urls: urlDatabase,
+    urls: userUrls,
   };
 
   res.render("urls_index", templateVars);
@@ -134,14 +169,12 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
-
+//delete this route before submission
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+//delete this route before submission
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
@@ -152,7 +185,7 @@ app.get("/urls", (req, res) => {
 
   const templateVars = {
     user: user,
-    urls: urlDatabase,
+    urls: urlsForUser(userId),
   };
 
   res.render("urls_index", templateVars);
@@ -170,18 +203,34 @@ app.get("/urls/new", (req, res) => {
   } else {
     res.render("urls_new", templateVars);
   }
-
-  // if (req.cookies.user_id) {
-  //   res.render("urls_new", templateVars);
-  // } else {
-  //   res.redirect("/login");
-  // }
 });
 
 app.get("/urls/:id", (req, res) => {
+  const shortURL = req.params.id;
+  const longURL = urlDatabase[shortURL];
+  const userId = req.cookies.user_id;
+
+  if (!userId) {
+    return res
+      .status(403)
+      .send("You must be logged in to create a new URL");
+  }
+
+  if (!longURL) {
+    res.status(404).send("URL not found");
+    return;
+  }
+
+  if (longURL.userID !== req.cookies.user_id) {
+    res
+      .status(403)
+      .send("You do not have permission to access this URL.");
+    return;
+  }
+
   const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    id: shortURL,
+    longURL: longURL.longURL,
   };
   res.render("urls_show", templateVars);
 });
@@ -194,58 +243,68 @@ app.post("/urls", (req, res) => {
   }
 
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    userID: userId,
+  };
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
+
   if (!longURL) {
     res.status(404).send("URL not found");
   }
   res.redirect(longURL);
 });
 
-function generateRandomString() {
-  let newString = "";
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 6; i++) {
-    newString += characters.charAt(
-      Math.floor(Math.random() * characters.length)
-    );
-  }
-  return newString;
-}
-
 app.post("/urls/:id/delete", (req, res) => {
-  const idToDelete = req.params.id;
+  const shortURL = req.params.id;
+  const longURL = urlDatabase[shortURL];
 
-  if (urlDatabase[idToDelete]) {
-    delete urlDatabase[idToDelete];
-    res.redirect("/urls"); // Redirect back to urls_index page
-  } else {
+  if (!longURL) {
     res.status(404).send("URL not found");
+    return;
   }
+
+  if (longURL.userID !== req.cookies.user_id) {
+    res
+      .status(403)
+      .send("You do not have permission to delete this URL.");
+    return;
+  }
+
+  // Delete URL from database
+  delete urlDatabase[shortURL];
+
+  res.redirect("/urls"); // Redirect back to urls_index page
 });
 
 app.post("/urls/:id", (req, res) => {
-  const idToUpdate = req.params.id;
+  const shortURL = req.params.id;
+  const longURL = urlDatabase[shortURL];
+
+  if (!longURL) {
+    res.status(404).send("URL not found");
+    return;
+  }
+
+  if (longURL.userID !== req.cookies.user_id) {
+    res
+      .status(403)
+      .send("You do not have permission to edit this URL.");
+    return;
+  }
+
   const newLongURL = req.body.newLongURL;
 
-  if (urlDatabase[idToUpdate]) {
-    urlDatabase[idToUpdate] = newLongURL;
-    res.redirect("/urls");
-  } else {
-    res.status(404).send("URL not found");
-  }
+  // Update the URL in the database
+  urlDatabase[shortURL].longURL = newLongURL;
+
+  res.redirect("/urls");
 });
 
-function getUserByEmail(email) {
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      return users[userId];
-    }
-  }
-  return null;
-}
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
