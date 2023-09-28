@@ -96,7 +96,11 @@ function generateRandomString() {
 }
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (req.session.user_id) {
+    res.redirect("/urls");
+  } else {
+    res.redirect("/login");
+  }
 });
 
 app.get("/login", (req, res) => {
@@ -272,6 +276,7 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: shortURL,
     longURL: longURL.longURL,
+    user: users[userId],
   };
   res.render("urls_show", templateVars);
 });
@@ -292,11 +297,12 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
+  const URLObject = urlDatabase[req.params.id];
 
-  if (!longURL) {
+  if (!URLObject) {
     res.status(404).send("URL not found");
   }
+  const longURL = URLObject.longURL;
   res.redirect(longURL);
 });
 
