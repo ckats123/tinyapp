@@ -19,8 +19,8 @@ app.use(
     name: "session",
     keys: ["Hello", "Hi"],
 
-    // Cookie Options
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+
+    maxAge: 24 * 60 * 60 * 1000, 
   })
 );
 
@@ -65,24 +65,6 @@ function urlsForUser(id) {
   return userUrls;
 }
 
-// const getUserByEmail = function (email, database) {
-//   for (const userId in database) {
-//     if (database[userId].email === email) {
-//       return database[userId];
-//     }
-//   }
-//   return null;
-// };
-
-// function getUserByEmail(email) {
-//   for (const userId in users) {
-//     if (users[userId].email === email) {
-//       return users[userId];
-//     }
-//   }
-//   return null;
-// }
-
 function generateRandomString() {
   let newString = "";
   const characters =
@@ -121,15 +103,6 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const user = getUserByEmail(email, users);
-
-  // if (user) {
-  //   if (user.password === password) {
-  //     res.cookie("user_id", user.id);
-  //     res.redirect("/urls");
-  //   } else {
-  //     res.status(403).send("Incorrect password");
-  //   }
-  // }
 
   if (user) {
     if (bcrypt.compareSync(password, user.password)) {
